@@ -16,72 +16,22 @@ import { User } from './users/user';
 import { Scope } from './scopes/scope';
 import { AuthorizationCode } from './authorization-codes/authorization-code';
 import { Session } from './sessions/session';
-import { Apiary } from './apiaries/apiary';
-import { ApiaryRepository } from './apiaries/apiary.repository';
-import { Hive } from './hives/hive';
-import { HiveRepository } from './hives/hive.repository';
-import { DictionaryRepository } from './dictionary/dictionary.repository';
-import { Dictionary } from './dictionary/dictionary';
-import { Diary } from './diary/diary';
-import { DiaryRepository } from './diary/diary.repository';
-import { Attachment } from './attachments/attachment';
-import { AttachmentRepository } from './attachments/attachment.repository';
-import { NotificationRepository } from './notifications/notification.repository';
-import { Notification } from './notifications/notification';
-import { Event } from './events/event';
-import { EventsRepository } from './events/events.repository';
-import { InviteRepository } from './invites/invite.repository';
-import { Invite } from './invites/invite';
-import { CustomField } from './custom-fields/custom-field';
-import { CustomFieldValueDate } from './custom-fields/custom-field-value-date';
-import { CustomFieldValueDictionary } from './custom-fields/custom-field-value-dictionary';
-import { CustomFieldValueString } from './custom-fields/custom-field-value-string';
-import { CustomFieldRepository } from './custom-fields/custom-field.repository';
-import { CustomFieldValueNumber } from './custom-fields/custom-field-value-number';
-import { CustomFieldValueRepository } from './custom-fields/custom-field-value.repository';
-import { RequestRepository } from './requests/request.repository';
-import { Request } from './requests/request';
 
 const entities = [
-  Apiary,
-  Attachment,
   Realm,
   Client,
   User,
   Scope,
   AuthorizationCode,
   Session,
-  Hive,
-  Dictionary,
-  Diary,
-  Notification,
-  Event,
-  Invite,
-  CustomField,
-  CustomFieldValueDate,
-  CustomFieldValueDictionary,
-  CustomFieldValueNumber,
-  CustomFieldValueString,
-  Request,
 ];
 
 const repositories = [
   AuthorizationCodeRepository,
-  AttachmentRepository,
   ClientRepository,
   RealmRepository,
   UserRepository,
   SessionRepository,
-  ApiaryRepository,
-  HiveRepository,
-  DictionaryRepository,
-  DiaryRepository,
-  NotificationRepository,
-  EventsRepository,
-  InviteRepository,
-  CustomFieldRepository,
-  CustomFieldValueRepository,
-  RequestRepository,
 ];
 
 @Module({

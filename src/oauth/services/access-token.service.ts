@@ -82,7 +82,7 @@ export class AccessTokenService {
       const refreshTokenPayload: RefreshTokenPayload =
         await this.jwtService.verifyAsync(request.refresh_token);
 
-      const client = await this.clientRepository.findByIdOrFail(clientId);
+      await this.clientRepository.findByIdOrFail(clientId);
 
       const user = await this.userRepository.findByIdOrFail(
         refreshTokenPayload.sub,
@@ -123,7 +123,6 @@ export class AccessTokenService {
         email: user.credentials.email,
         phone: user.credentials.login,
         city: user.address.city,
-        roles: user.roles,
       },
       tokenOptions,
     );

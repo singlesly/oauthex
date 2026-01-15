@@ -8,12 +8,11 @@ import {
   Param,
   Post,
   Query,
-  RawBodyRequest,
   Req,
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import express from 'express';
 import {
   ApiBasicAuth,
   ApiConflictResponse,
@@ -27,7 +26,6 @@ import {
 } from '@nestjs/swagger';
 import { AuthorizationCodeGrantRequestDto } from '../requests/authorization-code-grant-request.dto';
 import { OauthCookieKeys } from '../enum/oauth-cookie-keys';
-import { FormdataInterceptor } from 'nestjs-formdata-interceptor';
 import { RegistrationRequestDto } from '../requests/registration-request.dto';
 import { RegistrationService } from '../services/registration.service';
 import { AuthenticateRequestDto } from '../requests/authenticate-request.dto';
@@ -40,9 +38,9 @@ import { FrontendUrlService } from '../services/frontend-url.service';
 import { RegistrationResponse } from '../responses/registration.response';
 import { ClientRepository } from '../../database/clients/client.repository';
 import {
-  ClientCredentials,
   ClientCredentialsHeader,
 } from '../decorators/client-credentials';
+import type { ClientCredentials } from '../decorators/client-credentials';
 import { RecoveryPasswordResponse } from '../responses/recovery-password-response';
 import { RecoveryPasswordRequestDto } from '../requests/recovery-password-request.dto';
 import { RecoveryPasswordService } from '../services/recovery-password.service';
@@ -74,8 +72,8 @@ export class OauthController {
   public async authorize(
     @Param('realm') realm: string,
     @Query() query: AuthorizationCodeGrantRequestDto,
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
+    @Req() request: express.Request,
+    @Res({ passthrough: true }) response: express.Response,
   ): Promise<void> {
     const authSessionId = request.cookies[OauthCookieKeys.AUTH_SESSION] as
       | string
@@ -131,6 +129,13 @@ export class OauthController {
     return this.accessTokenService.issue(query, clientId);
   }
 
+  /**
+   * TODO: make json request
+   * @param realm
+   * @param body
+   * @param query
+   * @param response
+   */
   @Post(`realms/:realm/authenticate`)
   @ApiOperation({
     summary: 'Авторизует пользователя по кредам и создает сессию',
@@ -142,13 +147,12 @@ export class OauthController {
     description:
       'Неймспейс пользователей в рамках проекта всегда 1 значение main',
   })
-  @UseInterceptors(new FormdataInterceptor())
   @ApiConsumes('multipart/form-data')
   public async authenticate(
     @Param('realm') realm: string,
     @Body() body: AuthenticateRequestDto,
     @Query() query: AuthorizationCodeGrantRequestDto,
-    @Res() response: Response,
+    @Res() response: express.Response,
   ): Promise<void> {
     const { code, session } = await this.authenticateService.authenticate(
       body,
@@ -194,7 +198,7 @@ export class OauthController {
   public async registration(
     @Param('realm') realmName: string,
     @Body() body: RegistrationRequestDto,
-    @Res({ passthrough: true }) response: Response,
+    @Res({ passthrough: true }) response: express.Response,
     @ClientCredentialsHeader() clientCredentials: ClientCredentials,
   ): Promise<RegistrationResponse> {
     const { clientId } = clientCredentials;
@@ -225,7 +229,7 @@ export class OauthController {
   public logout(
     @Param('realm') realmName: string,
     @Headers('referer') referer: string,
-    @Res({ passthrough: true }) response: Response,
+    @Res({ passthrough: true }) response: express.Response,
   ): void {
     response.cookie(OauthCookieKeys.AUTH_SESSION, null, {
       expires: new Date('2000-01-01'),
@@ -258,7 +262,7 @@ export class OauthController {
     @Body() dto: RecoveryPasswordRequestDto,
     @ClientCredentialsHeader() clientCredentials: ClientCredentials,
     @Param('realm') realmName: string,
-    @Res({ passthrough: true }) response: Response,
+    @Res({ passthrough: true }) response: express.Response,
   ): Promise<RecoveryPasswordResponse> {
     const client = await this.clientRepository.findByIdOrFail(
       clientCredentials.clientId,
