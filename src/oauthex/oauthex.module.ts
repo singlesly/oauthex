@@ -54,16 +54,4 @@ import { LoggerModule } from '@app/logger/logger.module';
     },
   ],
 })
-export class OauthexModule implements OnApplicationBootstrap {
-  constructor(
-    private readonly realmRepository: RealmRepository,
-    private readonly clientRepository: ClientRepository,
-  ) {}
-
-  async onApplicationBootstrap(): Promise<void> {
-    const realm = new Realm('main');
-    await this.realmRepository.save(realm);
-    await this.clientRepository.save(new Client('web', realm));
-    await this.clientRepository.save(new Client('mobile', realm));
-  }
-}
+export class OauthexModule {}

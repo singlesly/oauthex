@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 import express from 'express';
-import { ViewResponse } from '@app/common/responses/view.response';
-import { VIEW_RESPONSE_RENDERING_KEY } from '@app/common/consts/view.consts';
+import { VIEW_RESPONSE_RENDERING_KEY } from '@app/app-plugins/view-plugin/consts/view.consts';
+import { ViewResponse } from '@app/app-plugins/view-plugin/responses/view.response';
 
 @Injectable()
 export class ViewInterceptor implements NestInterceptor {

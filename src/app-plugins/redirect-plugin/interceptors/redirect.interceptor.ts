@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import { Response } from 'express';
-import { RedirectResponse } from '@app/common/responses/redirect.response';
+import { RedirectResponse } from '@app/app-plugins/redirect-plugin/responses/redirect.response';
 
 @Injectable()
 export class RedirectInterceptor implements NestInterceptor {

@@ -17,21 +17,21 @@ export class App {
     return this;
   }
 
-  public run(): void {
-    NestFactory.create<NestExpressApplication>(AppModule, {
+  public async run(port: number = 3000): Promise<void> {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: this.logger,
-    })
-      .then(async (app) => {
-        for (const plugin of this.appPlugins) {
-          await plugin.install(app);
-        }
+    });
 
-        await app.listen(process.env.PORT ?? 3000);
+    for (const plugin of this.appPlugins) {
+      this.logger.log(
+        `install plugin ${plugin.constructor.name}`,
+        plugin.constructor.name,
+      );
+      await plugin.install(app);
+    }
 
-        return app;
-      })
-      .then(() => {
-        this.logger.log('application is running');
-      });
+    await app.listen(port);
+
+    this.logger.log(`application is running on ${port}`);
   }
 }
