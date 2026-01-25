@@ -52,7 +52,7 @@ import { RecoveryPasswordService } from './services/recovery-password.service';
     },
   ],
 })
-export class OauthModule implements OnApplicationBootstrap {
+export class OauthexModule implements OnApplicationBootstrap {
   constructor(
     private readonly realmRepository: RealmRepository,
     private readonly clientRepository: ClientRepository,

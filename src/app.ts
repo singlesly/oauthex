@@ -23,7 +23,7 @@ export class App {
     })
       .then(async (app) => {
         for (const plugin of this.appPlugins) {
-          await plugin(app);
+          await plugin.install(app);
         }
 
         await app.listen(process.env.PORT ?? 3000);
