@@ -8,8 +8,11 @@ import { adminModules, apiModules } from '../routes';
 import { OauthexModule } from '@app/oauthex/oauthex.module';
 import { AppPlugin } from '@app/app-plugins/app-plugin';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 export class SwaggerPlugin implements AppPlugin {
+  constructor(private readonly prefix: string) {}
+
   install(app: NestExpressApplication): Promise<void> | void {
     const baseConfig = new DocumentBuilder()
       .addBasicAuth(
@@ -63,17 +66,21 @@ export class SwaggerPlugin implements AppPlugin {
       customCss: theme.getBuffer(SwaggerThemeNameEnum.FEELING_BLUE),
     };
 
-    SwaggerModule.setup('/ecpp/docs', app, document, {
+    SwaggerModule.setup(join(this.prefix, 'docs'), app, document, {
       ...options,
       customSiteTitle: 'API',
       swaggerOptions: {},
     } as SwaggerCustomOptions);
 
-    SwaggerModule.setup('/ecpp/admin/docs', app, adminDocument, {
-      ...options,
-      customSiteTitle: 'API',
-      swaggerOptions: {},
-    } as SwaggerCustomOptions);
+    SwaggerModule.setup(
+      join(this.prefix, 'admin', 'docs'),
+      app,
+      adminDocument,
+      {
+        ...options,
+        customSiteTitle: 'API',
+        swaggerOptions: {},
+      } as SwaggerCustomOptions,
+    );
   }
-
 }

@@ -15,22 +15,22 @@ export class ProjectLoggerService implements LoggerService {
   ) {}
 
   log(message: any, ...optionalParams: any[]) {
-    this.logger.log(message, optionalParams);
+    this.logger.log(message, ...optionalParams);
   }
   error(message: any, ...optionalParams: any[]) {
-    this.logger.error(message, optionalParams);
+    this.logger.error(message, ...optionalParams);
   }
   warn(message: any, ...optionalParams: any[]) {
-    this.logger.warn(message, optionalParams);
+    this.logger.warn(message, ...optionalParams);
   }
   debug(message: any, ...optionalParams: any[]) {
-    this.logger.debug(message, optionalParams);
+    this.logger.debug(message, ...optionalParams);
   }
   verbose(message: any, ...optionalParams: any[]) {
-    this.logger.verbose(message, optionalParams);
+    this.logger.verbose(message, ...optionalParams);
   }
   fatal(message: any, ...optionalParams: any[]) {
-    this.logger.fatal(message, optionalParams);
+    this.logger.fatal(message, ...optionalParams);
   }
   setLogLevels(levels: LogLevel[]) {
     this.logger.localInstance.setLogLevels?.(levels);

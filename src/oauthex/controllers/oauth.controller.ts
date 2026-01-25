@@ -5,12 +5,12 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  NotImplementedException,
   Param,
   Post,
   Query,
   Req,
   Res,
-  UseInterceptors,
 } from '@nestjs/common';
 import express from 'express';
 import {
@@ -37,13 +37,16 @@ import { AccessTokenService } from '../services/access-token.service';
 import { FrontendUrlService } from '../services/frontend-url.service';
 import { RegistrationResponse } from '../responses/registration.response';
 import { ClientRepository } from '../../database/clients/client.repository';
-import {
-  ClientCredentialsHeader,
-} from '../decorators/client-credentials';
+import { ClientCredentialsHeader } from '../decorators/client-credentials';
 import type { ClientCredentials } from '../decorators/client-credentials';
 import { RecoveryPasswordResponse } from '../responses/recovery-password-response';
 import { RecoveryPasswordRequestDto } from '../requests/recovery-password-request.dto';
 import { RecoveryPasswordService } from '../services/recovery-password.service';
+import { AuthorizeRequest } from '@app/oauthex/requests/authorize.request';
+import { ProjectLoggerService } from '@app/logger/project-logger.service';
+import { RedirectResponse } from '@app/common/responses/redirect.response';
+import { RequestCookies } from '@app/common/decorators/request-cookies';
+import { CookieStorage } from '@app/common/dto/cookie-storage';
 
 @Controller('oauth')
 @ApiTags('Oauth')
@@ -56,13 +59,14 @@ export class OauthController {
     private readonly frontendUrlService: FrontendUrlService,
     private readonly clientRepository: ClientRepository,
     private readonly recoveryPasswordService: RecoveryPasswordService,
+    private readonly logger: ProjectLoggerService,
   ) {}
 
   @Get('realms/:realm/authorize')
   @ApiOperation({
     summary: 'Проверить авторизацию пользователя',
     description:
-      'Если пользователь авторизован, то произойдет редирект на redirect_uri в ином случае откроется страница {frontendUrl}/oauth/realms/{realm}/login',
+      'Авторизационный endpoint: выдаёт authorization code после согласия пользователя',
   })
   @ApiParam({
     name: 'realm',
@@ -71,13 +75,13 @@ export class OauthController {
   })
   public async authorize(
     @Param('realm') realm: string,
-    @Query() query: AuthorizationCodeGrantRequestDto,
+    @Query() query: AuthorizeRequest,
+    @RequestCookies() cookies: CookieStorage,
     @Req() request: express.Request,
-    @Res({ passthrough: true }) response: express.Response,
-  ): Promise<void> {
-    const authSessionId = request.cookies[OauthCookieKeys.AUTH_SESSION] as
-      | string
-      | undefined;
+  ): Promise<RedirectResponse> {
+    this.logger.log('incoming query', query);
+
+    const authSessionId = cookies.getOne(OauthCookieKeys.AUTH_SESSION);
 
     if (!authSessionId) {
       const url = new URL(
@@ -85,206 +89,89 @@ export class OauthController {
         this.frontendUrlService.getFrontendUrl(request),
       );
       url.search = query.toQueryString();
-      return response.redirect(url.toString());
+
+      return new RedirectResponse(url);
     }
 
     const { code } = await this.authorizationCodeService.issueBySessionId(
       authSessionId,
-      query.redirect_uri || '',
+      query.redirectUri.toString(),
     );
 
-    const url = new URL(``, query.redirect_uri as string);
+    const url = new URL(``, query.redirectUri);
     url.searchParams.set('code', code.code);
 
-    return response.redirect(url.toString());
+    return new RedirectResponse(url);
   }
 
-  @Post('realms/:realm/token')
-  @ApiOperation({
-    summary: 'Получение токенов доступа',
-  })
-  @ApiOkResponse({
-    type: AccessTokenResponseDto,
-  })
-  @HttpCode(HttpStatus.OK)
-  @ApiBasicAuth('optional-basic-auth')
-  @ApiHeader({
-    name: 'authorization',
-    required: false,
-    description:
-      'Basic Authorization для клиента. Принимает значение Basic base64(clientId:clientSecret). base64 функция которая кодирует clientId:clientSecret через : в base64',
-  })
-  @ApiParam({
-    name: 'realm',
-    description:
-      'Неймспейс пользователей в рамках проекта всегда 1 значение main',
-  })
-  public async token(
-    @Param('realm') realm: string,
-    @Query() query: AccessTokenRequestDto,
-    @ClientCredentialsHeader() clientCredentials: ClientCredentials,
-  ): Promise<AccessTokenResponseDto> {
-    const { clientId } = clientCredentials;
-
-    return this.accessTokenService.issue(query, clientId);
-  }
-
-  /**
-   * TODO: make json request
-   * @param realm
-   * @param body
-   * @param query
-   * @param response
-   */
-  @Post(`realms/:realm/authenticate`)
-  @ApiOperation({
-    summary: 'Авторизует пользователя по кредам и создает сессию',
-    description:
-      'В случае успешной авторизации будет перенаправление на redirect_uri с подставленным code в query строку, code клиент меняет на token',
-  })
-  @ApiParam({
-    name: 'realm',
-    description:
-      'Неймспейс пользователей в рамках проекта всегда 1 значение main',
-  })
-  @ApiConsumes('multipart/form-data')
-  public async authenticate(
-    @Param('realm') realm: string,
-    @Body() body: AuthenticateRequestDto,
-    @Query() query: AuthorizationCodeGrantRequestDto,
-    @Res() response: express.Response,
-  ): Promise<void> {
-    const { code, session } = await this.authenticateService.authenticate(
-      body,
-      realm,
-      query.client_id,
-      query.redirect_uri || '',
-    );
-
-    const url = new URL('', code.redirectUri);
-    url.searchParams.set('code', code.code);
-    response.cookie(OauthCookieKeys.AUTH_SESSION, session.id, {
-      expires: new Date('2030-01-01'),
-    });
-
-    return response.redirect(url.toString());
-  }
-
-  @Post('realms/:realm/registration')
-  @ApiOperation({ summary: 'Регистрация нового пользователя в системе' })
-  @ApiParam({
-    name: 'realm',
-    description:
-      'Неймспейс пользователей в рамках проекта всегда 1 значение main',
-  })
-  @ApiHeader({
-    name: 'authorization',
-    required: false,
-    description:
-      'Basic Authorization для клиента. Принимает значение Basic base64(clientId:clientSecret). base64 функция которая кодирует clientId:clientSecret через : в base64',
-  })
-  @ApiConsumes('application/json')
-  @ApiBasicAuth('optional-basic-auth')
-  @ApiHeader({
-    name: 'authorization',
-    required: false,
-  })
-  @ApiConflictResponse({
-    description: 'если юзер уже существует и логин/email занят',
-  })
-  @ApiCreatedResponse({
-    description: 'успешная регистрация вернется code который меняется на токен',
-  })
-  public async registration(
-    @Param('realm') realmName: string,
-    @Body() body: RegistrationRequestDto,
-    @Res({ passthrough: true }) response: express.Response,
-    @ClientCredentialsHeader() clientCredentials: ClientCredentials,
-  ): Promise<RegistrationResponse> {
-    const { clientId } = clientCredentials;
-    const client = await this.clientRepository.findByIdOrFail(clientId);
-    const user = await this.registrationService.registration(body, realmName);
-    const { code, session } = await this.authorizationCodeService.issue(
-      user.realm,
-      user,
-      client,
-      '',
-    );
-
-    response.cookie(OauthCookieKeys.AUTH_SESSION, session.id, {
-      expires: new Date('2030-01-01'),
-    });
-
-    return { code: code.code };
-  }
-
-  @Post('realms/:realm/logout')
-  @ApiOperation({ summary: 'Удалить сессию авторизованного юзера' })
-  @ApiParam({
-    name: 'realm',
-    description:
-      'Неймспейс пользователей в рамках проекта всегда 1 значение main',
-  })
-  @ApiConsumes('application/json')
-  public logout(
-    @Param('realm') realmName: string,
-    @Headers('referer') referer: string,
-    @Res({ passthrough: true }) response: express.Response,
-  ): void {
-    response.cookie(OauthCookieKeys.AUTH_SESSION, null, {
-      expires: new Date('2000-01-01'),
-    });
-
-    const url = new URL('', referer);
-
-    return response.redirect(url.toString());
-  }
-
-  @Post('realms/:realm/recovery-password')
-  @ApiOperation({ summary: 'Восстановление пароля' })
-  @ApiBasicAuth('optional-basic-auth')
-  @ApiConsumes('application/json')
-  @ApiParam({
-    name: 'realm',
-    description:
-      'Неймспейс пользователей в рамках проекта всегда 1 значение main',
-  })
-  @ApiHeader({
-    name: 'authorization',
-    required: false,
-    description:
-      'Basic Authorization для клиента. Принимает значение Basic base64(clientId:clientSecret). base64 функция которая кодирует clientId:clientSecret через : в base64',
-  })
-  @ApiCreatedResponse({
-    type: RecoveryPasswordResponse,
-  })
-  public async recoveryPassword(
-    @Body() dto: RecoveryPasswordRequestDto,
-    @ClientCredentialsHeader() clientCredentials: ClientCredentials,
-    @Param('realm') realmName: string,
-    @Res({ passthrough: true }) response: express.Response,
-  ): Promise<RecoveryPasswordResponse> {
-    const client = await this.clientRepository.findByIdOrFail(
-      clientCredentials.clientId,
-    );
-    const user = await this.recoveryPasswordService.recovery(
-      realmName,
-      dto.login,
-      dto.password,
-      dto.code,
-    );
-
-    const { code, session } = await this.authorizationCodeService.issue(
-      user.realm,
-      user,
-      client,
-      '',
-    );
-
-    response.cookie(OauthCookieKeys.AUTH_SESSION, session.id, {
-      expires: new Date('2030-01-01'),
-    });
-
-    return { code: code.code };
-  }
+  // @Post('realms/:realm/token')
+  // @ApiOperation({
+  //   summary: 'Получение токенов доступа',
+  // })
+  // @ApiOkResponse({
+  //   type: AccessTokenResponseDto,
+  // })
+  // @HttpCode(HttpStatus.OK)
+  // @ApiBasicAuth('optional-basic-auth')
+  // @ApiHeader({
+  //   name: 'authorization',
+  //   required: false,
+  //   description:
+  //     'Basic Authorization для клиента. Принимает значение Basic base64(clientId:clientSecret). base64 функция которая кодирует clientId:clientSecret через : в base64',
+  // })
+  // @ApiParam({
+  //   name: 'realm',
+  //   description:
+  //     'Неймспейс пользователей в рамках проекта всегда 1 значение main',
+  // })
+  // public async token(
+  //   @Param('realm') realm: string,
+  //   @Query() query: AccessTokenRequestDto,
+  //   @ClientCredentialsHeader() clientCredentials: ClientCredentials,
+  // ): Promise<AccessTokenResponseDto> {
+  //   const { clientId } = clientCredentials;
+  //
+  //   return this.accessTokenService.issue(query, clientId);
+  // }
+  //
+  // @Post('realms/:realm/introspect')
+  // @ApiOperation({
+  //   description:
+  //     'Проверка валидности и метаданных токена (для Resource Server)',
+  // })
+  // public introspect(): void {
+  //   throw new NotImplementedException();
+  // }
+  //
+  // @Get('realms/:realm/jwks')
+  // public getJwks(): void {
+  //   throw new NotImplementedException();
+  // }
+  //
+  // @Post('realms/:realm/device_authorization')
+  // public deviceAuthorizaton(): void {
+  //   throw new NotImplementedException();
+  // }
+  //
+  // @Post('realms/:realm/revoke')
+  // @ApiOperation({ summary: 'Удалить сессию авторизованного юзера' })
+  // @ApiParam({
+  //   name: 'realm',
+  //   description:
+  //     'Неймспейс пользователей в рамках проекта всегда 1 значение main',
+  // })
+  // @ApiConsumes('application/json')
+  // public revoke(
+  //   @Param('realm') realmName: string,
+  //   @Headers('referer') referer: string,
+  //   @Res({ passthrough: true }) response: express.Response,
+  // ): void {
+  //   response.cookie(OauthCookieKeys.AUTH_SESSION, null, {
+  //     expires: new Date('2000-01-01'),
+  //   });
+  //
+  //   const url = new URL('', referer);
+  //
+  //   return response.redirect(url.toString());
+  // }
 }

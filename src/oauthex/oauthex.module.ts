@@ -16,11 +16,13 @@ import { AccessTokenService } from './services/access-token.service';
 import { FrontendUrlService } from './services/frontend-url.service';
 import { DatabaseModule } from '../database/database.module';
 import { RecoveryPasswordService } from './services/recovery-password.service';
+import { LoggerModule } from '@app/logger/logger.module';
 
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
+    LoggerModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

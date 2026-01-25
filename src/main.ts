@@ -11,5 +11,9 @@ import { WinstonModule } from 'nest-winston';
 import { loggerOptions } from './logger/logger.options';
 
 new App(AppModule, WinstonModule.createLogger(loggerOptions))
-  .plugins([new PagesPlugin(), new SwaggerPlugin(), new CookiePlugin()])
+  .plugins([
+    new PagesPlugin(),
+    new SwaggerPlugin('oauthex'),
+    new CookiePlugin(),
+  ])
   .run();
