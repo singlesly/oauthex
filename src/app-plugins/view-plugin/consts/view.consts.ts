@@ -1,0 +1,1 @@
+export const VIEW_RESPONSE_RENDERING_KEY = Symbol('Response is rendering view');
