@@ -1,0 +1,51 @@
+{{> partials/head title="Application"}}
+
+<main class="container">
+  <h3>Application page</h3>
+  <form id="sign-in" method="get">
+    <input type="submit" value="Sign in">
+  </form>
+</main>
+
+<script type="text/javascript">
+  /**
+   * @type {string}
+   */
+  const realm = '{{realm}}';
+
+  /**
+   *
+   * @returns AuthorizeRequest
+   */
+  function getParams() {
+    const state = sha256(Date.now().toString());
+    const codeVerifier = Math.random().toString();
+    const codeChallenge = base64url.encode(
+      base64url.stringToArrayBuffer(
+        sha256(codeVerifier)
+      )
+    );
+    const codeChallengeMethod = 'S256';
+
+    return {
+      response_type: 'code',
+      client_id: 'web',
+      redirect_uri: `http://localhost:3000/oauthex/pages/realms/${realm}/app`,
+      state: state,
+      code_challenge: codeChallenge,
+      code_challenge_method: codeChallengeMethod
+    };
+  }
+
+  const form = document.querySelector('form#sign-in');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const params = getParams();
+    const urlParams = new URLSearchParams(params);
+
+    window.location = `/oauth/realms/${realm}/authorize?${urlParams.toString()}`
+  })
+
+</script>
+
+{{> partials/footer}}

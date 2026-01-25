@@ -34,14 +34,13 @@ export class OauthController {
     @Param('realm') realm: string,
     @Query() query: AuthorizeRequest,
     @RequestCookies() cookies: CookieStorage,
-    @Req() request: express.Request,
   ): Promise<RedirectResponse> {
     const authSessionId = cookies.getOne(OauthCookieKeys.AUTH_SESSION);
 
     if (!authSessionId) {
       const url = new URL(
-        `/oauth/realms/${realm}/login`,
-        this.frontendUrlService.getFrontendUrl(request),
+        `/oauthex/pages/realms/${realm}/login`,
+        'http://localhost:3000',
       );
       url.search = query.toQueryString();
 
