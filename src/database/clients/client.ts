@@ -1,6 +1,7 @@
 import { Realm } from '../realms/realm';
 import { Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm';
 import { ClientSettings } from '@app/database/clients/client-settings';
+import { Type } from 'class-transformer';
 
 /**
  * https://datatracker.ietf.org/doc/html/rfc6749#autoid-15
@@ -16,6 +17,7 @@ export class Client {
   public readonly realm!: Realm;
 
   @Column('jsonb')
+  @Type(() => ClientSettings)
   public readonly settings: ClientSettings;
 
   constructor(id: string, realm: Realm, settings: ClientSettings) {

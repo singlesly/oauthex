@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Query, Req } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Query,
+  Req,
+} from '@nestjs/common';
 import express from 'express';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { OauthCookieKeys } from '../enum/oauth-cookie-keys';
@@ -9,12 +16,14 @@ import { ProjectLoggerService } from '@app/logger/project-logger.service';
 import { RequestCookies } from '@app/common/decorators/request-cookies';
 import { CookieStorage } from '@app/common/dto/cookie-storage';
 import { RedirectResponse } from '@app/app-plugins/redirect-plugin/responses/redirect.response';
+import { ClientRepository } from '@app/database/clients/client.repository';
 
 @Controller('oauth')
 @ApiTags('Oauth')
 export class OauthController {
   constructor(
     private readonly authorizationCodeService: AuthorizationCodeService,
+    private readonly clientRepository: ClientRepository,
     private readonly frontendUrlService: FrontendUrlService,
     private readonly logger: ProjectLoggerService,
   ) {}
@@ -38,10 +47,17 @@ export class OauthController {
     const authSessionId = cookies.getOne(OauthCookieKeys.AUTH_SESSION);
 
     if (!authSessionId) {
-      const url = new URL(
-        `/oauthex/pages/realms/${realm}/login`,
-        'http://localhost:3000',
+      const client = await this.clientRepository.findByIdOrFail(
+        query.clientId,
+        realm,
       );
+      if (
+        !client.settings.redirectUris.includes(query.redirectUri.toString())
+      ) {
+        throw new BadRequestException('unregistered redirect uri');
+      }
+
+      const url = new URL(``, client.settings.uiBaseUrl);
       url.search = query.toQueryString();
 
       return new RedirectResponse(url);

@@ -11,9 +11,11 @@ import { loggerOptions } from './logger/logger.options';
 import { ViewPlugin } from '@app/app-plugins/view-plugin/view-plugin';
 import { RedirectPlugin } from '@app/app-plugins/redirect-plugin/redirect-plugin';
 import { ValidationPlugin } from '@app/app-plugins/validation-plugin/validation-plugin';
+import { TypeormPlugin } from '@app/app-plugins/typeorm-plugin/typeorm-plugin';
 
 void new App(AppModule, WinstonModule.createLogger(loggerOptions))
   .plugins([
+    new TypeormPlugin(),
     new RedirectPlugin(),
     new ValidationPlugin(),
     new ViewPlugin('pages', 'hbs', 'pages/oauthex'),

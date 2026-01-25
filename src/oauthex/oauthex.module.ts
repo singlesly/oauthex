@@ -48,10 +48,6 @@ import { LoggerModule } from '@app/logger/logger.module';
       useFactory: (config: ConfigService) =>
         config.getOrThrow<OauthConfig>('oauth'),
     },
-    {
-      provide: APP_FILTER,
-      useClass: OauthExceptionFilter,
-    },
   ],
 })
 export class OauthexModule {}

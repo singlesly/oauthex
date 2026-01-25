@@ -1,7 +1,9 @@
 export class ClientSettings {
-  public readonly uiBaseUrl?: string | null;
+  public readonly uiBaseUrl: string;
+  public readonly redirectUris: string[];
 
-  constructor(uiBaseUrl: string) {
+  constructor(uiBaseUrl: string, redirectUris: string[]) {
     this.uiBaseUrl = uiBaseUrl;
+    this.redirectUris = redirectUris;
   }
 }
