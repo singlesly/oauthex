@@ -1,0 +1,21 @@
+<script type="text/javascript">
+  /**
+   *
+   * @param url {string}
+   * @param method {"POST"|"GET"|"PUT"|"PATCH"|"DELETE"}
+   * @param body {Object}
+   * @returns {Promise<Object>}
+   */
+  async function makeRequest(url, method, body) {
+    const response = await fetch(url, {
+      method,
+      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${btoa(`{{clientId}}:{{clientSecret}}`)}`
+      }
+    });
+
+    return response.json();
+  }
+</script>

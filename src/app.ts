@@ -1,7 +1,6 @@
 import { ConsoleLogger, LoggerService, Type } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { AppPlugin } from './app-plugins/app-plugin';
 
 export class App {
@@ -18,7 +17,7 @@ export class App {
   }
 
   public async run(port: number = 3000): Promise<void> {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(this.module, {
       logger: this.logger,
     });
 
@@ -32,6 +31,6 @@ export class App {
 
     await app.listen(port);
 
-    this.logger.log(`application is running on ${port}`);
+    this.logger.log(`application is running on ${port}`, App.name);
   }
 }

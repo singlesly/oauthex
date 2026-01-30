@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class RegistrationRequestDto {
+export class RegistrationRequest {
   @ApiProperty()
   @IsDefined()
   @IsString()

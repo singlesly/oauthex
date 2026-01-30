@@ -43,7 +43,7 @@
     const params = getParams();
     const urlParams = new URLSearchParams(params);
 
-    window.location = `/oauth/realms/${realm}/authorize?${urlParams.toString()}`
+    window.location = `/realms/${realm}/authorize?${urlParams.toString()}`
   })
 
 </script>

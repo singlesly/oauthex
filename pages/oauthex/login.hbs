@@ -3,7 +3,7 @@
 {{> partials/nav }}
 
 <main class="container">
-  <form>
+  <form id="login">
     <fieldset>
       <label>
         Login
@@ -22,8 +22,16 @@
 </main>
 
 <script type="text/javascript">
-  const a = '123';
-  console.log(a);
+  const form = document.querySelector('form#login');
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const request = Object.fromEntries(fd.entries());
+
+    const response = await makeRequest("/realms/{{realm}}/login", "POST", request);
+
+    console.log(response);
+  })
 </script>
 
 {{> partials/footer}}

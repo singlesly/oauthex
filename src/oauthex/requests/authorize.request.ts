@@ -1,6 +1,7 @@
 import { IsDefined, IsEnum, IsInstance, IsUrl } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { CamelToSnake } from '@app/common/text/camel-to-snake';
 
 export class AuthorizeRequest {
   @ApiProperty({
@@ -70,7 +71,7 @@ export class AuthorizeRequest {
 
   public toQueryString(): string {
     return Object.entries(this)
-      .map(([key, value]) => `${key}=${value}`)
+      .map(([key, value]) => `${new CamelToSnake(key).toSnake()}=${value}`)
       .join('&');
   }
 }

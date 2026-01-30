@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '../../database/users/user.repository';
 import { AuthenticateRequestDto } from '../requests/authenticate-request.dto';
 import { OauthException } from '../exceptions/oauth.exception';
@@ -34,12 +34,7 @@ export class AuthenticateService {
       ]);
 
       if (request.password !== user.credentials.password) {
-        throw new OauthException(
-          realmName,
-          OauthActionEnum.LOGIN,
-          [{ name: 'password', errorMessage: 'Неверный пароль' }],
-          'Неверный пароль',
-        ).httpResponseCode(HttpStatus.BAD_REQUEST);
+        throw new BadRequestException();
       }
 
       return this.authorizationCodeService.issue(
@@ -57,12 +52,7 @@ export class AuthenticateService {
           fields.push({ name: 'login', errorMessage: 'не найден' });
         }
 
-        throw new OauthException(
-          realmName,
-          OauthActionEnum.LOGIN,
-          fields,
-          'пользователь не найден',
-        ).httpResponseCode(HttpStatus.NOT_FOUND);
+        throw new NotFoundException();
       }
 
       throw e;

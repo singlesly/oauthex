@@ -1,6 +1,6 @@
-import { RegistrationRequestDto } from '../requests/registration-request.dto';
+
 import { User } from '../../database/users/user';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { ForbiddenException, HttpStatus, Injectable } from '@nestjs/common';
 import { RealmRepository } from '../../database/realms/realm.repository';
 import { Credentials } from '../../database/users/credentials';
 import { Name } from '../../database/users/name';
@@ -9,6 +9,7 @@ import { UserRepository } from '../../database/users/user.repository';
 import { OauthException } from '../exceptions/oauth.exception';
 import { OauthActionEnum } from '../enum/oauth-action.enum';
 import { Profile } from '../../database/users/profile';
+import { RegistrationRequest } from '@app/oauthex/requests/registration.request';
 
 @Injectable()
 export class RegistrationService {
@@ -18,19 +19,14 @@ export class RegistrationService {
   ) {}
 
   public async registration(
-    request: RegistrationRequestDto,
+    request: RegistrationRequest,
     realmName: string,
   ): Promise<User> {
     const realm = await this.realmRepository.findByNameOrFail(realmName);
 
     const exists = await this.userRepository.existsByLogin(request.login);
     if (exists) {
-      throw new OauthException(
-        realmName,
-        OauthActionEnum.REGISTRATION,
-        [{ name: 'login', errorMessage: 'пользователь уже существует' }],
-        'пользователь уже существует',
-      ).httpResponseCode(HttpStatus.CONFLICT);
+      throw new ForbiddenException();
     }
 
     const user = new User(

@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { AccessTokenRequestDto } from '../requests/access-token-request.dto';
 import { AccessTokenResponseDto } from '../responses/access-token-response.dto';
@@ -55,12 +55,7 @@ export class AccessTokenService {
       );
 
       if (user.credentials.password !== request.password) {
-        throw new OauthException(
-          client.realm.name,
-          OauthActionEnum.LOGIN,
-          [{ name: 'password', errorMessage: 'Неверный пароль' }],
-          'Неверный пароль',
-        ).httpResponseCode(HttpStatus.BAD_REQUEST);
+        throw new BadRequestException();
       }
 
       const { accessToken, refreshToken, expiresIn } =
